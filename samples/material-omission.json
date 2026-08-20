@@ -1,0 +1,28 @@
+{
+  "fixture_kind": "direct-test-only-synthetic-payload",
+  "not_public_evidence": true,
+  "purpose": "Exercise material-omission consensus and rollback behavior without editing, mislabelling, or publishing a real consultation source.",
+  "summary_url": "https://fixture.invalid/official-summary",
+  "documents": [
+    {
+      "url": "https://fixture.invalid/response-major-theme",
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    {
+      "url": "https://fixture.invalid/response-minority-objection",
+      "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    }
+  ],
+  "mock_summary_text": "The published summary records support for the proposal and describes its administrative benefits.",
+  "mock_response_texts": [
+    "A material recurring theme is that a staged implementation condition is necessary before the proposal can operate safely.",
+    "A minority objection warns of a process risk if the staged implementation condition is absent."
+  ],
+  "expected_mock_result": {
+    "fidelity": "MATERIAL_OMISSION",
+    "omission_mask": 12,
+    "distortion_mask": 0,
+    "confidence_band": "HIGH",
+    "reason_code": "OMISSION_DETECTED"
+  }
+}

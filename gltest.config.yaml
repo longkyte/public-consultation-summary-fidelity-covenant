@@ -1,0 +1,9 @@
+networks:
+  default: studionet
+  studionet:
+    url: "https://studio.genlayer.com/api"
+    leader_only: false
+
+paths:
+  contracts: "contracts"
+  artifacts: "artifacts"
