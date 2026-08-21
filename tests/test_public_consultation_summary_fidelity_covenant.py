@@ -37,7 +37,7 @@ def sealed(contract, count=1):
     contract.seal_consultation(ID, SUMMARY_URL, digest(canonical(SUMMARY_HTML)))
 
 
-def mocked(direct_vm, payload=None, extra=None, status=200, document_body=None, with_llm=True):
+def mocked(direct_vm, payload=None, extra=None, status=200, document_body=None, with_llm=True, strip_metadata=True):
     direct_vm.strict_mocks = True
     direct_vm.check_pickling = True
     direct_vm.mock_web(r"example\.org/summary", {"status": status, "body": SUMMARY_HTML})
@@ -46,7 +46,18 @@ def mocked(direct_vm, payload=None, extra=None, status=200, document_body=None, 
         for url, body in (extra or {}).items():
             direct_vm.mock_web(url, {"status": 200, "body": body})
         if with_llm:
-            direct_vm.mock_llm(r"PCSFC_V1", payload or result())
+            response = payload or result()
+            try:
+                parsed = json.loads(response)
+                revision = parsed["revision"]
+                if strip_metadata:
+                    parsed.pop("schema", None)
+                    parsed.pop("consultation_id", None)
+                    parsed.pop("revision", None)
+                response = json.dumps(parsed)
+            except (json.JSONDecodeError, KeyError, TypeError):
+                revision = 1
+            direct_vm.mock_llm(r"TRUSTED_CONTEXT: consultation_id=" + ID + r"; revision=" + str(revision), response)
 
 
 def assess(contract, direct_vm, payload=None, extra=None, status=200):
@@ -71,6 +82,15 @@ def test_lifecycle_authorization_and_one_document_minimum(direct_deploy, direct_
     with direct_vm.prank(direct_bob):
         assess(contract, direct_vm)
     assert contract.read_fidelity(ID)[0] == "FAITHFUL"
+
+
+def test_owner_is_canonical_string_after_persisted_storage_round_trip(direct_deploy, direct_vm, direct_alice):
+    contract = direct_deploy(CONTRACT)
+    direct_vm.check_pickling = True
+    direct_vm.sender = direct_alice
+    contract.create_consultation(ID, TITLE, CRITERIA)
+    assert contract.consultations[ID].owner == "0x" + direct_alice.hex()
+    contract.add_document(ID, DOCUMENT_URL, digest(canonical(DOCUMENT_HTML)))
 
 
 def test_ids_hashes_owner_only_seal_and_history_bounds(direct_deploy, direct_vm, direct_alice, direct_bob):
@@ -145,7 +165,7 @@ def test_invalid_urls_are_rejected_before_nondeterminism(direct_deploy, direct_v
         contract.add_document(ID, url, digest("x"))
 
 
-@pytest.mark.parametrize("fidelity,omission,distortion,confidence,reason", [("FAITHFUL", 0, 0, "HIGH", "NONE"), ("MATERIAL_OMISSION", 1, 0, "MEDIUM", "OMISSION_DETECTED"), ("MATERIAL_DISTORTION", 0, 2, "HIGH", "DISTORTION_DETECTED"), ("BOTH", 1, 8, "HIGH", "BOTH_DETECTED"), ("UNRESOLVED", 0, 0, "LOW", "SOURCE_UNAVAILABLE")])
+@pytest.mark.parametrize("fidelity,omission,distortion,confidence,reason", [("FAITHFUL", 0, 0, "HIGH", "NONE"), ("MATERIAL_OMISSION", 1, 0, "MEDIUM", "OMISSION_DETECTED"), ("MATERIAL_DISTORTION", 0, 2, "HIGH", "DISTORTION_DETECTED"), ("BOTH", 1, 8, "HIGH", "BOTH_DETECTED"), ("UNRESOLVED", 0, 0, "LOW", "MALFORMED_OR_AMBIGUOUS")])
 def test_all_closed_fidelity_outcomes(direct_deploy, direct_vm, fidelity, omission, distortion, confidence, reason):
     contract = direct_deploy(CONTRACT)
     sealed(contract)
@@ -154,7 +174,43 @@ def test_all_closed_fidelity_outcomes(direct_deploy, direct_vm, fidelity, omissi
     assert (stored.fidelity, int(stored.omission_mask), int(stored.distortion_mask), stored.confidence_band, stored.reason_code) == (fidelity, omission, distortion, confidence, reason)
 
 
-@pytest.mark.parametrize("bad", ["{bad", result(fidelity="FAITHFUL", omission=1), result(fidelity="MATERIAL_OMISSION", omission=0, reason="OMISSION_DETECTED"), result(fidelity="MATERIAL_DISTORTION", distortion=0, reason="DISTORTION_DETECTED"), result(fidelity="BOTH", omission=1, distortion=0, reason="BOTH_DETECTED"), result(fidelity="UNRESOLVED", confidence="HIGH", reason="SOURCE_UNAVAILABLE"), result(reason="OMISSION_DETECTED"), result(extra="forbidden")])
+def test_prompt_binds_trusted_consultation_identity_before_llm_validation(direct_deploy, direct_vm):
+    contract = direct_deploy(CONTRACT)
+    sealed(contract)
+    assess(contract, direct_vm)
+    assert contract.read_fidelity(ID)[0] == "FAITHFUL"
+
+
+def test_matching_optional_model_metadata_is_verified_then_rebound(direct_deploy, direct_vm):
+    contract = direct_deploy(CONTRACT)
+    sealed(contract)
+    mocked(direct_vm, result(), strip_metadata=False)
+    contract.assess(ID)
+    assert direct_vm.run_validator() is True
+    assert contract.read_fidelity(ID)[0] == "FAITHFUL"
+
+
+def test_redundant_model_reason_is_ignored_and_derived_from_fidelity(direct_deploy, direct_vm):
+    contract = direct_deploy(CONTRACT)
+    sealed(contract)
+    assess(contract, direct_vm, result(fidelity="MATERIAL_OMISSION", omission=12, confidence="HIGH", reason="NONE"))
+    history = contract.read_history(ID, 1)
+    assert history.fidelity == "MATERIAL_OMISSION"
+    assert history.reason_code == "OMISSION_DETECTED"
+
+
+def test_mismatched_optional_model_metadata_fails_closed(direct_deploy, direct_vm):
+    contract = direct_deploy(CONTRACT)
+    sealed(contract)
+    payload = json.loads(result())
+    payload["consultation_id"] = "wrong-id"
+    mocked(direct_vm, json.dumps(payload), strip_metadata=False)
+    contract.assess(ID)
+    assert direct_vm.run_validator() is True
+    assert contract.read_fidelity(ID)[0] == "UNRESOLVED"
+
+
+@pytest.mark.parametrize("bad", ["{bad", result(fidelity="FAITHFUL", omission=1), result(fidelity="MATERIAL_OMISSION", omission=0, reason="OMISSION_DETECTED"), result(fidelity="MATERIAL_DISTORTION", distortion=0, reason="DISTORTION_DETECTED"), result(fidelity="BOTH", omission=1, distortion=0, reason="BOTH_DETECTED"), result(fidelity="UNRESOLVED", confidence="HIGH", reason="SOURCE_UNAVAILABLE"), result(extra="forbidden")])
 def test_invalid_cross_field_or_extra_llm_payloads_fail_closed(direct_deploy, direct_vm, bad):
     contract = direct_deploy(CONTRACT)
     sealed(contract)
@@ -163,7 +219,7 @@ def test_invalid_cross_field_or_extra_llm_payloads_fail_closed(direct_deploy, di
     assert (stored.fidelity, int(stored.omission_mask), int(stored.distortion_mask), stored.confidence_band, stored.reason_code) == ("UNRESOLVED", 0, 0, "LOW", "MALFORMED_OR_AMBIGUOUS")
 
 
-@pytest.mark.parametrize("bad", [result(fidelity="FAITHFUL", confidence="LOW"), result(fidelity="MATERIAL_OMISSION", omission=1, confidence="LOW", reason="OMISSION_DETECTED"), result(fidelity="MATERIAL_OMISSION", omission=1, distortion=2, reason="OMISSION_DETECTED"), result(fidelity="MATERIAL_DISTORTION", omission=1, distortion=2, reason="DISTORTION_DETECTED"), result(fidelity="BOTH", omission=1, distortion=2, reason="NONE")])
+@pytest.mark.parametrize("bad", [result(fidelity="FAITHFUL", confidence="LOW"), result(fidelity="MATERIAL_OMISSION", omission=1, confidence="LOW", reason="OMISSION_DETECTED"), result(fidelity="MATERIAL_OMISSION", omission=1, distortion=2, reason="OMISSION_DETECTED"), result(fidelity="MATERIAL_DISTORTION", omission=1, distortion=2, reason="DISTORTION_DETECTED")])
 def test_remaining_decisive_cross_field_invariants_fail_closed(direct_deploy, direct_vm, bad):
     contract = direct_deploy(CONTRACT)
     sealed(contract)

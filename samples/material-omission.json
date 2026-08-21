@@ -1,28 +1,14 @@
 {
-  "fixture_kind": "direct-test-only-synthetic-payload",
-  "not_public_evidence": true,
-  "purpose": "Exercise material-omission consensus and rollback behavior without editing, mislabelling, or publishing a real consultation source.",
-  "summary_url": "https://fixture.invalid/official-summary",
+  "fixture_kind": "controlled-public-e2e-corpus",
+  "not_a_real_consultation": true,
+  "source_revision": "609b777fc47ee96eda941c6f1da223568846d1e3",
+  "consultation_id": "pcsfc-v9-omission-pages-20260821",
+  "summary_url": "https://longkyte.github.io/pcsfc-e2e-public-corpus/omission-summary.html",
+  "summary_sha256": "fa612ffba443c22ac26a9d83d5f8fe8ac424a850fc87b9788edefd57f436b8fe",
   "documents": [
-    {
-      "url": "https://fixture.invalid/response-major-theme",
-      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-    },
-    {
-      "url": "https://fixture.invalid/response-minority-objection",
-      "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
-    }
+    {"url": "https://longkyte.github.io/pcsfc-e2e-public-corpus/omission-response-1.html", "sha256": "c94e3d7789cd9fbe54f5d69b939dfbc1b3b0ffd52135e4e3b864a0b7a0b4af4f"},
+    {"url": "https://longkyte.github.io/pcsfc-e2e-public-corpus/omission-response-2.html", "sha256": "c205cbc721e3da6549e283f732c171b308ddd9ffa7f0f9050c7b6708a75297b2"}
   ],
-  "mock_summary_text": "The published summary records support for the proposal and describes its administrative benefits.",
-  "mock_response_texts": [
-    "A material recurring theme is that a staged implementation condition is necessary before the proposal can operate safely.",
-    "A minority objection warns of a process risk if the staged implementation condition is absent."
-  ],
-  "expected_mock_result": {
-    "fidelity": "MATERIAL_OMISSION",
-    "omission_mask": 12,
-    "distortion_mask": 0,
-    "confidence_band": "HIGH",
-    "reason_code": "OMISSION_DETECTED"
-  }
+  "revision_1": {"fidelity": "MATERIAL_OMISSION", "omission_mask": 12, "distortion_mask": 0, "confidence_band": "HIGH", "reason_code": "OMISSION_DETECTED", "evidence_manifest_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"},
+  "revision_2": {"fidelity": "MATERIAL_OMISSION", "omission_mask": 12, "distortion_mask": 0, "confidence_band": "HIGH", "reason_code": "OMISSION_DETECTED", "evidence_manifest_hash": "8cbc162b294763ef171b01c66c868cbd8c1b7f5aba7385ca10dd93776e078ded"}
 }

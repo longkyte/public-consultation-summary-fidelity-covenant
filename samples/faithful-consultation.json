@@ -1,30 +1,14 @@
 {
-  "fixture_kind": "real-public-corpus-candidate",
-  "consultation_id": "scotland-fruit-vegetables-aid-2025-published-subset",
-  "title": "Scotland Fruit and Vegetables Aid Scheme Published-Response Subset",
-  "criteria_profile": "material themes, minority objections, stated conditions, and process or implementation risks; no respondent-count or representativeness claim",
-  "summary_url": "https://consult.gov.scot/agriculture-and-rural-economy/future-of-fruit-vegetables-aid-scheme-scotland/consult_view/",
-  "summary_sha256": "99d844db2a7f919c38627bb515006f23e344f4bce5bc31a18bf66d430ac1b47a",
+  "fixture_kind": "controlled-public-e2e-corpus",
+  "not_a_real_consultation": true,
+  "source_revision": "609b777fc47ee96eda941c6f1da223568846d1e3",
+  "consultation_id": "pcsfc-v9-faithful-pages-20260821",
+  "summary_url": "https://longkyte.github.io/pcsfc-e2e-public-corpus/faithful-summary.html",
+  "summary_sha256": "d78dc82a04b5c11d5b111e62c208118a74884bbf4d6cab05518dc59efddad93f",
   "documents": [
-    {
-      "url": "https://consult.gov.scot/agriculture-and-rural-economy/future-of-fruit-vegetables-aid-scheme-scotland/consultation/view_respondent?uuId=651650022",
-      "sha256": "c7ca7c47c2d5bb40e557ba18ec9221fea7a838c351382427b14d431ca86708bb"
-    },
-    {
-      "url": "https://consult.gov.scot/agriculture-and-rural-economy/future-of-fruit-vegetables-aid-scheme-scotland/consultation/view_respondent?uuId=318510847",
-      "sha256": "5e5539710058d40cc89ce966fbde6a545c9e1e22990747cb9ec942d58dcff003"
-    },
-    {
-      "url": "https://consult.gov.scot/agriculture-and-rural-economy/future-of-fruit-vegetables-aid-scheme-scotland/consultation/view_respondent?uuId=982965925",
-      "sha256": "fcf092e36ac31bb3a739016be03a8e272e292c720d8585e750b976fc5ffbc546"
-    }
+    {"url": "https://longkyte.github.io/pcsfc-e2e-public-corpus/faithful-response-1.html", "sha256": "91f009e744dcccd737ebf7fcab0f5fdf96b9157d033aa5b4abc041f20af77eaf"},
+    {"url": "https://longkyte.github.io/pcsfc-e2e-public-corpus/faithful-response-2.html", "sha256": "acee4dc3c894b6bdf366964610c6edf9ccc222d7be84a211987c08ac0a68c5eb"}
   ],
-  "expected_mock_result": {
-    "fidelity": "FAITHFUL",
-    "omission_mask": 0,
-    "distortion_mask": 0,
-    "confidence_band": "HIGH",
-    "reason_code": "NONE"
-  },
-  "source_boundary": "The manifest is limited to three consented-to-publish HTML responses. It is a bounded-corpus candidate, not a claim about every consultation response or a completed on-chain assessment."
+  "manifest_sha256": "6836c11ca5bae8e968091ac4528340d9a8a91cdc9d68567cd3ad16ca1638e661",
+  "readback": ["FAITHFUL", 0, 0, 1]
 }

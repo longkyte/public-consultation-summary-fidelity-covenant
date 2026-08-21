@@ -56,8 +56,8 @@ read_history(id, revision)
 1. Copy all sealed primitives into memory before creating closures; no closure captures `self` or storage.
 2. Leader and validator independently fetch the summary and every sealed response URL with `gl.nondet.web.get`, require a successful UTF-8 HTML response, canonicalize visible text exactly as above, cap each text block, and verify its SHA-256 against the registered digest. PDF, authenticated, personalized, or non-text sources are out of scope until the current SDK documents a safe text-extraction path.
 3. Each invocation sends the same explicit criterion profile to the LLM. Source text is untrusted data: instructions inside it cannot alter the role, criteria, schema, or output.
-4. The LLM returns only canonical JSON: schema marker, consultation ID, candidate revision, fidelity enum, omission mask, distortion mask, confidence band, and reason code. It returns no rationale, score, timestamp, or model metadata.
-5. The validator first requires `gl.vm.Return`, then validates exact keys, identity, enum values, mask range, and every cross-field invariant. It independently repeats retrieval and evaluation, then requires exact equality of every consequential payload field.
+4. The LLM returns only fidelity, omission mask, distortion mask, and confidence band. Optional echoed metadata is accepted only when it exactly matches trusted state. Contract code binds schema, consultation ID, revision, and derives the redundant reason code deterministically from fidelity.
+5. The validator first requires `gl.vm.Return`, then validates trusted metadata, allowed keys, enums, mask range, and every cross-field invariant. It independently repeats retrieval and evaluation, then requires exact equality of every consequential bound field.
 6. Controlled retrieval, digest, parse, and LLM failures normalize to the closed `UNRESOLVED` payload. The validator independently reruns the same work and accepts that payload only when its own closed result agrees; otherwise consensus rejects and state remains unchanged. After `gl.vm.run_nondet_unsafe` returns an accepted payload, deterministic code appends the assessment and changes lifecycle state. Partial coverage is never presented as a faithful decision.
 
 `reason_code` allowlist: `NONE`, `OMISSION_DETECTED`, `DISTORTION_DETECTED`, `BOTH_DETECTED`, `SOURCE_UNAVAILABLE`, `MALFORMED_OR_AMBIGUOUS`.
@@ -70,7 +70,7 @@ read_history(id, revision)
 | `omission_mask` | independent issue classification | yes | review routing | exact bits and independent recomputation | exact | same fidelity, mask `1` vs `4` rejects |
 | `distortion_mask` | independent issue classification | yes | escalation routing | exact bits and independent recomputation | exact | mask `1` vs `4` rejects |
 | `confidence_band` | independent evidence sufficiency evaluation | yes | consumer filtering | exact enum and invariant check | exact | `MEDIUM` vs `HIGH` rejects |
-| `reason_code` | independent closed classification | yes | explains fail-closed state | exact enum and outcome invariant | exact | same masks, wrong reason rejects |
+| `reason_code` | deterministic fidelity/source-failure mapping | yes | explains fail-closed state | recomputed by contract | deterministic | wrong model echo is ignored; stored value follows fidelity |
 | `issue_mask` | bitwise OR of accepted masks | no | consumer routing | never LLM supplied | deterministic | returned OR is verified from both masks |
 | appeal disputed mask | appellant input | yes | scopes a later reassessment | deterministic 1–15 range check | deterministic input binding | zero or out-of-range mask rejects |
 | revision/status/history | accepted revision and contract transition | yes | append-only auditability | never LLM supplied | deterministic | replay/failure leaves history unchanged |
